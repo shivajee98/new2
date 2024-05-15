@@ -21,6 +21,9 @@ GPIO.setup(SERVO_PIN, GPIO.OUT)
 servo = GPIO.PWM(SERVO_PIN, 50)  # PWM with 50Hz frequency
 
 def calculate_distance():
+    GPIO.setup(TRIG, GPIO.OUT)
+    GPIO.setup(ECHO, GPIO.IN)
+    
     GPIO.output(TRIG, False)
     time.sleep(0.2)
     GPIO.output(TRIG, True)
@@ -44,20 +47,22 @@ try:
     while True:
         for angle in range(15, 166):
             servo.start(8)  # Move to 15 degrees
-            time.sleep(0.3)
+            time.sleep(0.03)
             servo.ChangeDutyCycle(8 + (angle / 18))  # Convert angle to duty cycle
-            time.sleep(0.3)
+            time.sleep(0.03)
             distance = calculate_distance()
             data = str(angle) + "," + str(distance) + "."
+            print(data, end="", flush=True)
             client_socket.send(data.encode())
         
         for angle in range(165, 14, -1):
             servo.start(8)  # Move to 15 degrees
-            time.sleep(0.3)
+            time.sleep(0.03)
             servo.ChangeDutyCycle(8 + (angle / 18))  # Convert angle to duty cycle
-            time.sleep(0.3)
+            time.sleep(0.03)
             distance = calculate_distance()
             data = str(angle) + "," + str(distance) + "."
+            print(data, end="", flush=True)
             client_socket.send(data.encode())
 
 except KeyboardInterrupt:
