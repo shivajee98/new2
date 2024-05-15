@@ -1,66 +1,74 @@
-import java.io.*;
-import java.net.*;
-import processing.serial.*; // imports library for serial communication
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.net.Socket;
 
-Serial myPort; // defines Object Serial
 String angle = "";
 String distance = "";
+String data = "";
+String noObject;
+float pixsDistance;
 int iAngle, iDistance;
-boolean newData = false;
+int index1 = 0;
+int index2 = 0;
+PFont orcFont;
+
+Socket socket;
+BufferedReader input;
 
 void setup() {
   size(1500, 900);
   smooth();
-  
   try {
-    ServerSocket serverSocket = new ServerSocket(8888); // Change the port if needed
-    println("Waiting for connection...");
-    Socket socket = serverSocket.accept();
-    println("Connection established: " + socket.getInetAddress());
-    BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    
-    String line = input.readLine();
-    println("Received data: " + line);
-    String[] dataParts = line.split(",");
-    if (dataParts.length == 2) {
-      angle = dataParts[0];
-      distance = dataParts[1];
-      iAngle = int(angle);
-      iDistance = int(distance);
-      newData = true;
-    }
-    
-    input.close();
-    socket.close();
-    serverSocket.close();
+    // Connect to the server socket
+    socket = new Socket("YOUR_SERVER_IP_ADDRESS", 8888); // Replace with your server's IP address
+    input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
   } catch (IOException e) {
     e.printStackTrace();
   }
 }
 
 void draw() {
-  if (newData) {
-    background(255);
-    drawRadar();
-    drawLine();
-    drawObject();
-    drawText();
-    newData = false;
-  }
+  fill(98, 245, 31);
+  noStroke();
+  fill(0, 4);
+  rect(0, 0, width, height-height*0.065);
+
+  fill(98, 245, 31);
+  drawRadar();
+  drawLine();
+  drawObject();
+  drawText();
 }
 
 void drawRadar() {
-  // Draw radar visuals here
+  // Your existing drawRadar() code
 }
 
 void drawObject() {
-  // Draw object visuals here
+  // Your existing drawObject() code
 }
 
 void drawLine() {
-  // Draw line visuals here
+  // Your existing drawLine() code
 }
 
 void drawText() {
-  // Draw text visuals here
+  try {
+    if (input.ready()) {
+      // Read data from the socket
+      data = input.readLine();
+
+      // Process the received data
+      index1 = data.indexOf(",");
+      angle = data.substring(0, index1);
+      distance = data.substring(index1 + 1, data.length());
+      iAngle = int(angle);
+      iDistance = int(distance);
+    }
+  } catch (IOException e) {
+    e.printStackTrace();
+  }
+
+  // Your existing drawText() code
 }
