@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.net.Socket;
+import javax.swing.JOptionPane;
+import javax.swing.JDialog;
 
 String angle = "";
 String distance = "";
@@ -12,7 +14,6 @@ int iAngle, iDistance;
 int index1 = 0;
 int index2 = 0;
 PFont orcFont;
-
 Socket socket;
 BufferedReader input;
 
@@ -26,6 +27,9 @@ void setup() {
   } catch (IOException e) {
     e.printStackTrace();
   }
+  
+  Thread dataReceiverThread = new Thread(new DataReceiver());
+  dataReceiverThread.start();
 }
 
 void draw() {
@@ -62,6 +66,7 @@ void drawRadar() {
   line((-width/2)*cos(radians(30)),0,width/2,0);
   popMatrix();
 }
+
 void drawObject() {
   pushMatrix();
   translate(width/2,height-height*0.074); // moves the starting coordinats to new location
@@ -75,6 +80,7 @@ void drawObject() {
   }
   popMatrix();
 }
+
 void drawLine() {
   pushMatrix();
   strokeWeight(9);
@@ -85,22 +91,6 @@ void drawLine() {
 }
 
 void drawText() {
-  try {
-    if (input.ready()) {
-      // Read data from the socket
-      data = input.readLine();
-
-      // Process the received data
-      index1 = data.indexOf(",");
-      angle = data.substring(0, index1);
-      distance = data.substring(index1 + 1, data.length());
-      iAngle = int(angle);
-      iDistance = int(distance);
-    }
-  } catch (IOException e) {
-    e.printStackTrace();
-  }
-
   pushMatrix();
   if(iDistance>40) {
   noObject = "Out of Range";
@@ -147,4 +137,45 @@ void drawText() {
   rotate(radians(-60));
   text("150°",0,0);
   popMatrix(); 
+}
+
+class DataReceiver implements Runnable {
+  public void run() {
+    try {
+      while (true) {
+        if (input.ready()) {
+          // Read data from the socket
+          data = input.readLine();
+          if (data == null) {
+            // Handle termination of data stream gracefully
+            socket.close();
+            return;
+          }
+
+          // Process the received data
+          index1 = data.indexOf(",");
+          angle = data.substring(0, index1);
+          distance = data.substring(index1 + 1, data.length());
+          iAngle = int(angle);
+          iDistance = int(distance);
+          
+          // Check if distance is less than 10cm
+          if (iDistance < 10) {
+            // Display a popup message
+            showLargeMessage("Intruder detected within 10cm range!");
+          }
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+}
+
+void showLargeMessage(String message) {
+  // Create a custom dialog
+  JDialog dialog = new JDialog();
+  dialog.setAlwaysOnTop(true);
+  dialog.setSize(1500, 1200); // Set the size of the dialog
+  JOptionPane.showMessageDialog(dialog, message);
 }
